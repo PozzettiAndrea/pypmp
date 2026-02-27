@@ -1,35 +1,26 @@
 # pypmp
 
-Python bindings for [pmp-library](https://www.pmp-library.org/) remeshing algorithms.
+<div align="center">
+<a href="https://pozzettiandrea.github.io/pypmp/">
+<img src="https://pozzettiandrea.github.io/pypmp/preview.png" alt="Uniform Remeshing Demo" width="800">
+</a>
+<br>
+<b><a href="https://pozzettiandrea.github.io/pypmp/">View Live Demo →</a></b>
+</div>
+
+Python bindings for [pmp-library](https://www.pmp-library.org/) isotropic triangle remeshing.
 
 ## Installation
 
 ```bash
-pip install pypmp
-```
-
-## Usage
-
-```python
-import numpy as np
-import pypmp
-
-# Load your mesh as numpy arrays
-vertices = ...  # (N, 3) float64
-faces = ...     # (M, 3) int32
-
-# Uniform remeshing — target edge length
-v_out, f_out = pypmp.remesh_uniform(vertices, faces, edge_length=0.1)
-
-# Adaptive remeshing — curvature-driven edge lengths
-v_out, f_out = pypmp.remesh_adaptive(
-    vertices, faces,
-    min_edge_length=0.05,
-    max_edge_length=0.2,
-    approx_error=0.001,
-)
+pip install pypmp --find-links https://github.com/PozzettiAndrea/pypmp/releases/latest/download/
 ```
 
 ## License
 
-MIT (same as pmp-library)
+MIT — same as pmp-library.
+
+## Credits
+
+- [pmp-library](https://www.pmp-library.org/) by Mario Botsch & collaborators
+- Botsch & Kobbelt, "A Remeshing Approach to Multiresolution Modeling" (SGP 2004)
