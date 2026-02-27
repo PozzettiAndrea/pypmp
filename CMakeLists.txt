@@ -5,6 +5,8 @@ project(pypmp LANGUAGES CXX)
 # Configure pmp-library as a static library (no GUI, no apps)
 # These MUST be set before add_subdirectory so pmp's CMakeLists.txt sees them.
 # ---------------------------------------------------------------------------
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
