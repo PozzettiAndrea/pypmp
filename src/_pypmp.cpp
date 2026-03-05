@@ -116,7 +116,8 @@ static nb::tuple py_remesh_uniform(
     const NDArray<const int, 2> faces,
     double edge_length,
     unsigned int iterations,
-    bool use_projection
+    bool use_projection,
+    int verbose
 ) {
     if (edge_length <= 0.0) {
         throw std::runtime_error("edge_length must be positive");
@@ -129,7 +130,8 @@ static nb::tuple py_remesh_uniform(
         throw std::runtime_error("Input must be a triangle mesh");
     }
 
-    pmp::uniform_remeshing(mesh, edge_length, iterations, use_projection);
+    pmp::uniform_remeshing(mesh, edge_length, iterations, use_projection,
+                           verbose);
     mesh.garbage_collection();
 
     return pmp_to_numpy(mesh);
@@ -142,7 +144,8 @@ static nb::tuple py_remesh_adaptive(
     double max_edge_length,
     double approx_error,
     unsigned int iterations,
-    bool use_projection
+    bool use_projection,
+    int verbose
 ) {
     if (min_edge_length <= 0.0) {
         throw std::runtime_error("min_edge_length must be positive");
@@ -163,7 +166,8 @@ static nb::tuple py_remesh_adaptive(
     }
 
     pmp::adaptive_remeshing(mesh, min_edge_length, max_edge_length,
-                            approx_error, iterations, use_projection);
+                            approx_error, iterations, use_projection,
+                            verbose);
     mesh.garbage_collection();
 
     return pmp_to_numpy(mesh);
@@ -208,7 +212,8 @@ NB_MODULE(_pypmp, m) {
         nb::arg("faces"),
         nb::arg("edge_length"),
         nb::arg("iterations") = 10,
-        nb::arg("use_projection") = true
+        nb::arg("use_projection") = true,
+        nb::arg("verbose") = 0
     );
 
     m.def(
@@ -248,6 +253,7 @@ NB_MODULE(_pypmp, m) {
         nb::arg("max_edge_length"),
         nb::arg("approx_error"),
         nb::arg("iterations") = 10,
-        nb::arg("use_projection") = true
+        nb::arg("use_projection") = true,
+        nb::arg("verbose") = 0
     );
 }

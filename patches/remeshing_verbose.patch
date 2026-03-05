@@ -1,0 +1,186 @@
+diff --git a/src/pmp/algorithms/remeshing.cpp b/src/pmp/algorithms/remeshing.cpp
+index 59040a56..9a423d43 100644
+--- a/src/pmp/algorithms/remeshing.cpp
++++ b/src/pmp/algorithms/remeshing.cpp
+@@ -6,6 +6,7 @@
+ #include <cmath>
+ 
+ #include <algorithm>
++#include <cstdio>
+ #include <memory>
+ #include <limits>
+ #include <numbers>
+@@ -253,11 +254,11 @@ public:
+     Remeshing(SurfaceMesh& mesh);
+ 
+     void uniform_remeshing(Scalar edge_length, unsigned int iterations = 10,
+-                           bool use_projection = true);
++                           bool use_projection = true, int verbosity = 0);
+ 
+     void adaptive_remeshing(Scalar min_edge_length, Scalar max_edge_length,
+                             Scalar approx_error, unsigned int iterations = 10,
+-                            bool use_projection = true);
++                            bool use_projection = true, int verbosity = 0);
+ 
+ private:
+     void preprocessing();
+@@ -285,6 +286,7 @@ private:
+                4.0 / 5.0 * std::min(vsizing_[v0], vsizing_[v1]);
+     }
+ 
++    int verbosity_{0};
+     SurfaceMesh& mesh_;
+     std::shared_ptr<SurfaceMesh> refmesh_;
+ 
+@@ -328,59 +330,100 @@ Remeshing::Remeshing(SurfaceMesh& mesh)
+ }
+ 
+ void Remeshing::uniform_remeshing(Scalar edge_length, unsigned int iterations,
+-                                  bool use_projection)
++                                  bool use_projection, int verbosity)
+ {
+     uniform_ = true;
+     use_projection_ = use_projection;
+     target_edge_length_ = edge_length;
++    verbosity_ = verbosity;
+ 
+     preprocessing();
+ 
+     for (unsigned int i = 0; i < iterations; ++i)
+     {
++        if (verbosity_ >= 1)
++        {
++            fprintf(stderr, "[pmp] uniform iteration %u/%u (%zu verts, %zu faces)\n",
++                    i + 1, iterations, mesh_.n_vertices(), mesh_.n_faces());
++            fflush(stderr);
++        }
++
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   split_long_edges...\n"); fflush(stderr); }
+         split_long_edges();
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   -> %zu verts, %zu faces\n", mesh_.n_vertices(), mesh_.n_faces()); fflush(stderr); }
+ 
+         vertex_normals(mesh_);
+ 
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   collapse_short_edges...\n"); fflush(stderr); }
+         collapse_short_edges();
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   -> %zu verts, %zu faces\n", mesh_.n_vertices(), mesh_.n_faces()); fflush(stderr); }
+ 
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   flip_edges...\n"); fflush(stderr); }
+         flip_edges();
+ 
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   tangential_smoothing...\n"); fflush(stderr); }
+         tangential_smoothing(5);
+     }
+ 
+     remove_caps();
+ 
++    if (verbosity_ >= 1)
++    {
++        fprintf(stderr, "[pmp] done: %zu verts, %zu faces\n", mesh_.n_vertices(), mesh_.n_faces());
++        fflush(stderr);
++    }
++
+     postprocessing();
+ }
+ 
+ void Remeshing::adaptive_remeshing(Scalar min_edge_length,
+                                    Scalar max_edge_length, Scalar approx_error,
+-                                   unsigned int iterations, bool use_projection)
++                                   unsigned int iterations, bool use_projection,
++                                   int verbosity)
+ {
+     uniform_ = false;
+     min_edge_length_ = min_edge_length;
+     max_edge_length_ = max_edge_length;
+     approx_error_ = approx_error;
+     use_projection_ = use_projection;
++    verbosity_ = verbosity;
+ 
+     preprocessing();
+ 
+     for (unsigned int i = 0; i < iterations; ++i)
+     {
++        if (verbosity_ >= 1)
++        {
++            fprintf(stderr, "[pmp] adaptive iteration %u/%u (%zu verts, %zu faces)\n",
++                    i + 1, iterations, mesh_.n_vertices(), mesh_.n_faces());
++            fflush(stderr);
++        }
++
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   split_long_edges...\n"); fflush(stderr); }
+         split_long_edges();
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   -> %zu verts, %zu faces\n", mesh_.n_vertices(), mesh_.n_faces()); fflush(stderr); }
+ 
+         vertex_normals(mesh_);
+ 
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   collapse_short_edges...\n"); fflush(stderr); }
+         collapse_short_edges();
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   -> %zu verts, %zu faces\n", mesh_.n_vertices(), mesh_.n_faces()); fflush(stderr); }
+ 
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   flip_edges...\n"); fflush(stderr); }
+         flip_edges();
+ 
++        if (verbosity_ >= 2) { fprintf(stderr, "[pmp]   tangential_smoothing...\n"); fflush(stderr); }
+         tangential_smoothing(5);
+     }
+ 
+     remove_caps();
+ 
++    if (verbosity_ >= 1)
++    {
++        fprintf(stderr, "[pmp] done: %zu verts, %zu faces\n", mesh_.n_vertices(), mesh_.n_faces());
++        fflush(stderr);
++    }
++
+     postprocessing();
+ }
+ 
+@@ -1178,18 +1221,21 @@ Point Remeshing::weighted_centroid(Vertex v)
+ } // namespace
+ 
+ void uniform_remeshing(SurfaceMesh& mesh, Scalar edge_length,
+-                       unsigned int iterations, bool use_projection)
++                       unsigned int iterations, bool use_projection,
++                       int verbosity)
+ {
+-    Remeshing(mesh).uniform_remeshing(edge_length, iterations, use_projection);
++    Remeshing(mesh).uniform_remeshing(edge_length, iterations, use_projection,
++                                      verbosity);
+ }
+ 
+ void adaptive_remeshing(SurfaceMesh& mesh, Scalar min_edge_length,
+                         Scalar max_edge_length, Scalar approx_error,
+-                        unsigned int iterations, bool use_projection)
++                        unsigned int iterations, bool use_projection,
++                        int verbosity)
+ {
+     Remeshing(mesh).adaptive_remeshing(min_edge_length, max_edge_length,
+                                        approx_error, iterations,
+-                                       use_projection);
++                                       use_projection, verbosity);
+ }
+ 
+ } // namespace pmp
+diff --git a/src/pmp/algorithms/remeshing.h b/src/pmp/algorithms/remeshing.h
+index 1d20be15..c437ed72 100644
+--- a/src/pmp/algorithms/remeshing.h
++++ b/src/pmp/algorithms/remeshing.h
+@@ -20,7 +20,8 @@ namespace pmp {
+ //! \ingroup algorithms
+ void uniform_remeshing(SurfaceMesh& mesh, Scalar edge_length,
+                        unsigned int iterations = 10,
+-                       bool use_projection = true);
++                       bool use_projection = true,
++                       int verbosity = 0);
+ 
+ //! \brief Perform adaptive remeshing.
+ //! \details Performs incremental remeshing based
+@@ -38,6 +39,7 @@ void uniform_remeshing(SurfaceMesh& mesh, Scalar edge_length,
+ void adaptive_remeshing(SurfaceMesh& mesh, Scalar min_edge_length,
+                         Scalar max_edge_length, Scalar approx_error,
+                         unsigned int iterations = 10,
+-                        bool use_projection = true);
++                        bool use_projection = true,
++                        int verbosity = 0);
+ 
+ } // namespace pmp

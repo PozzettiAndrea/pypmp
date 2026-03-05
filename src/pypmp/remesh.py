@@ -15,6 +15,7 @@ def remesh_uniform(
     edge_length: float,
     iterations: int = 10,
     use_projection: bool = True,
+    verbose: int = 0,
 ) -> tuple[NDArray[np.float64], NDArray[np.int32]]:
     """
     Uniform isotropic remeshing via edge split/collapse/flip + tangential relaxation.
@@ -51,7 +52,7 @@ def remesh_uniform(
     if f.ndim != 2 or f.shape[1] != 3:
         raise ValueError(f"faces must have shape (M, 3), got {f.shape}")
 
-    return _remesh_uniform(v, f, edge_length, iterations, use_projection)
+    return _remesh_uniform(v, f, edge_length, iterations, use_projection, verbose)
 
 
 def remesh_adaptive(
@@ -62,6 +63,7 @@ def remesh_adaptive(
     approx_error: float,
     iterations: int = 10,
     use_projection: bool = True,
+    verbose: int = 0,
 ) -> tuple[NDArray[np.float64], NDArray[np.int32]]:
     """
     Adaptive isotropic remeshing driven by local curvature.
@@ -103,5 +105,5 @@ def remesh_adaptive(
 
     return _remesh_adaptive(
         v, f, min_edge_length, max_edge_length, approx_error,
-        iterations, use_projection,
+        iterations, use_projection, verbose,
     )
