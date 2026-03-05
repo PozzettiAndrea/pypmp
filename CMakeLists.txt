@@ -21,6 +21,20 @@ set(PMP_BUILD_VIEWERS OFF CACHE BOOL "" FORCE)
 set(PMP_INSTALL OFF CACHE BOOL "" FORCE)
 set(PMP_STRICT_COMPILATION OFF CACHE BOOL "" FORCE)
 
+# Apply patches to pmp-library before building
+execute_process(
+  COMMAND git apply --check ${CMAKE_CURRENT_SOURCE_DIR}/patches/remeshing_verbose.patch
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/pmp-library
+  RESULT_VARIABLE patch_check_result
+  ERROR_QUIET
+)
+if(patch_check_result EQUAL 0)
+  execute_process(
+    COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/patches/remeshing_verbose.patch
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/pmp-library
+  )
+endif()
+
 # Build pmp — EXCLUDE_FROM_ALL suppresses pmp's own install rules
 # so only our nanobind module gets packaged into the wheel.
 add_subdirectory(pmp-library EXCLUDE_FROM_ALL)
